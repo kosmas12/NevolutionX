@@ -1,4 +1,6 @@
 #include <vector>
+#include "config.hpp"
+#include "menu.hpp"
 #include "findXBE.h"
 #include "font.h"
 #include "xbeMenuItem.h"
@@ -18,7 +20,7 @@
 #include <hal/video.h>
 #include <windows.h>
 #endif
-
+/*
 void goToMainMenu(menuItem *mI, Renderer *r, Font &f,
                   size_t &listSize, size_t &currItem, size_t &prevItem, int &mMS) {
   f.setPassive(mI, r);
@@ -26,15 +28,13 @@ void goToMainMenu(menuItem *mI, Renderer *r, Font &f,
   currItem = 0;
   prevItem = 1;
   mMS = 0;
-}
+}*/
 
 int main(void) {
+  Config config;
+
   int init = init_systems();
-  int mainMenuSelection = 0;
   ftpServer *s = nullptr;
-  std::vector<menuItem> mainMenu;
-  std::vector<xbeMenuItem> gamesList;
-  std::vector<xbeMenuItem> appsList;
   if (init <= 1) {
     bool running = true;
 
@@ -48,6 +48,7 @@ int main(void) {
     // Set a hint that we want to use our gamecontroller always
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
+/*
     // Create the worker thread for populating the games list
     xbeFinderArg xfaG;
     xfaG.list = &gamesList;
@@ -63,6 +64,7 @@ int main(void) {
     thrd_t thrA;
     int thread_statusA = 1;
     thrd_create(&thrA, findXBE, &xfaA);
+    */
 
     // Start FTP server
     if (init == 0) {
@@ -81,15 +83,19 @@ int main(void) {
     r.init("D:");
 
     // Create font because do it
-    Font f("D:\\vegur.ttf");
+    Font f(r, "vegur.ttf");
+
+    Menu menu(config, r);
 
     // Populate main menu
+    /*
     mainMenu.push_back(menuItem("Games"));
     mainMenu.push_back(menuItem("Applications"));
     mainMenu.push_back(menuItem("Launch DVD"));
     mainMenu.push_back(menuItem("Settings"));
     mainMenu.push_back(menuItem("Reboot"));
-
+    */
+/*
     size_t ret = f.createTextures(mainMenu, &r);
     if (ret != mainMenu.size()) {
       outputLine("Main menu textures could not be created.\n");
@@ -98,37 +104,51 @@ int main(void) {
     SDL_Texture* menuListTexture = r.compileList(mainMenu);
     if (menuListTexture == nullptr) {
       outputLine("Main menu list texture could not be compiled.\n");
-    }
+    }*/
     r.drawBackground();
-    r.drawMenuTexture(menuListTexture);
+    //r.drawMenuTexture(menuListTexture);
     r.flip();
-    size_t currItem = 0, prevItem = 0, listSize = mainMenu.size();
+    //int currItem = 0, prevItem = 0, listSize = mainMenu.size();
 
     SDL_Event event;
 
     while (running) {
+      r.setDrawColor(0, 89, 0);
+      r.clear();
+      //r.drawBackground();
+      //f.draw("babamm!");
+
+      menu.render(f);
+    //r.drawMenuTexture(menuListTexture);
+    r.flip();
       while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
+          /*
           if (thread_statusG == 1) {
             thrd_join(thrG, &thread_statusG);
           }
           if (thread_statusA == 1) {
             thrd_join(thrA, &thread_statusA);
-          }
+          }*/
           running = false;
           break;
         } else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
           if (event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP) {
+            /*
             prevItem = currItem;
             if (currItem == 0) {
               currItem = listSize - 1;
             } else {
               --currItem;
             }
+            */
           } else if (event.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {
+            /*
             prevItem = currItem;
             currItem = (currItem + 1) % listSize;
+            */
           } else if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A) {
+            /*
             switch (mainMenuSelection) {
             case 0:
               mainMenuSelection = currItem + 1;
@@ -166,8 +186,10 @@ int main(void) {
             default:
               break;
             }
+            */
           } else if (event.cbutton.button == SDL_CONTROLLER_BUTTON_B ||
                      event.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {
+            /*
             switch (mainMenuSelection) {
             case 0:
               break;
@@ -176,9 +198,11 @@ int main(void) {
                            mainMenuSelection);
               break;
             }
+            */
           }
         }
       }
+      /*
       // FIXME: Loads of repetitions ahead - break out into functions
       switch (mainMenuSelection) {
       case 0:
@@ -264,6 +288,7 @@ int main(void) {
       XVideoWaitForVBlank();
       SwitchToThread();
 #endif
+      */
     }
   }
   delete s;
