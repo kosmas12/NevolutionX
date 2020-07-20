@@ -33,7 +33,8 @@
             "path": "D:\\default.xbe"
         },
         {
-            "label": "Settings"
+            "label": "Settings",
+            "type": "settings"
         },
         {
             "label": "Reboot",

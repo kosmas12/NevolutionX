@@ -28,4 +28,4 @@ copy_resources:
 	@cp $(RESOURCEDIR)/480.bmp $(OUTPUT_DIR)/480.bmp
 	@cp $(RESOURCEDIR)/720.bmp $(OUTPUT_DIR)/720.bmp
 	@cp $(RESOURCEDIR)/vegur.ttf $(OUTPUT_DIR)/vegur.ttf
-	@cp $(CURDIR)/sameplconfig.json $(OUTPUT_DIR)/config.json
+	@cp $(CURDIR)/sampleconfig.json $(OUTPUT_DIR)/config.json

@@ -26,7 +26,7 @@ add_executable(${PROJECT_NAME}
   3rdparty/SDL_FontCache/SDL_FontCache.c
   )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 target_link_libraries(${PROJECT_NAME}
   ${SDL2_LIBRARIES}

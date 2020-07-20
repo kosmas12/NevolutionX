@@ -2,7 +2,40 @@
 
 #include <iostream>
 
-MenuNode::MenuNode(std::string label) : label(label) {
+#include "outputLine.h"
+#ifdef NXDK
+#include <hal/xbox.h>
+#endif
+
+
+/******************************************************************************************
+                                   MenuItem
+******************************************************************************************/
+MenuItem::MenuItem(std::string const& label) : label(label) {
+
+}
+
+MenuItem::~MenuItem() {
+
+}
+
+std::string_view MenuItem::getLabel() const {
+  return this->label;
+}
+
+MenuNode *MenuItem::getParent() const {
+  return parentNode;
+}
+
+void MenuItem::setParent(MenuNode* parent) {
+  parentNode = parent;
+}
+
+/******************************************************************************************
+                                   MenuNode
+******************************************************************************************/
+
+MenuNode::MenuNode(std::string const& label) : MenuItem(label) {
 
 }
 
@@ -11,45 +44,105 @@ MenuNode::~MenuNode() {
 }
 
 void MenuNode::execute() {
-
+  outputLine("%d", selected);
+  this->childNodes.at(selected)->execute();
 }
 
-std::string_view MenuNode::getLabel() const {
-  return this->label;
+size_t MenuNode::getSelected() {
+  return this->selected;
 }
 
-std::list<MenuNode> *MenuNode::getChildNodes() {
+std::vector<MenuItem*> *MenuNode::getChildNodes() {
   return &this->childNodes;
 }
 
-// TODO: Split up into Subclass SubmenuNode?
-
-
-void MenuNode::addNode(MenuNode node) {
+void MenuNode::addNode(MenuItem *node) {
   this->childNodes.push_back(node);
 }
 
-Menu::Menu(const Config &config, Renderer &renderer) : rootNode("root"), renderer(renderer) {
+void MenuNode::up() {
+  if (selected == 0) {
+    selected = childNodes.size() - 1;
+  } else {
+    --selected;
+  }
+}
+
+void MenuNode::down() {
+  selected = (selected + 1) % childNodes.size();
+}
+
+/******************************************************************************************
+                                   MenuXbe
+******************************************************************************************/
+MenuXbe::MenuXbe(std::string const& label, std::string const& path) :
+  MenuNode(label), path(path) {
+  // Find "default.xbe"'s and add them to ChildNodes
+}
+
+MenuXbe::~MenuXbe() {
+
+}
+
+void MenuXbe::execute() {
+
+}
+
+/******************************************************************************************
+                                   MenuLaunch
+******************************************************************************************/
+MenuLaunch::MenuLaunch(std::string const& label, std::string const& path) :
+  MenuItem(label), path(path) {
+  // Find "default.xbe"'s and add them to ChildNodes
+}
+
+MenuLaunch::~MenuLaunch() {
+
+}
+
+void MenuLaunch::execute() {
+  outputLine("Launching xbe %s", this->path.c_str());
+#ifdef NXDK
+  XLaunchXBE(const_cast<char*>(this->path.c_str()));
+#endif
+}
+
+/******************************************************************************************
+                                   Menu
+******************************************************************************************/
+Menu::Menu(const Config &config, Renderer &renderer) : renderer(renderer), rootNode("root") {
+  rootNode.setParent(&rootNode);
+  currentMenu = &rootNode;
   for (auto &e : config.json["menu"]) {
-    MenuNode newNode(e["label"]);
-    //newNode.label = e["label"];
-    this->rootNode.addNode(newNode);
-    //std::cout << e << std::endl;
-    //std::cout << e["label"] << std::endl;
+    if (!static_cast<std::string>(e["type"]).compare("scan")) {
+      MenuNode *newNode = new MenuXbe(e["label"], e["path"]);
+      this->rootNode.addNode(newNode);
+    }
+    else if (!static_cast<std::string>(e["type"]).compare("launch")) {
+      MenuLaunch *newNode = new MenuLaunch(e["label"], e["path"]);
+      this->rootNode.addNode(newNode);
+    }
+    else if (!static_cast<std::string>(e["type"]).compare("reboot")) {
+      MenuNode *newNode = new MenuNode(e["label"]);
+      this->rootNode.addNode(newNode);
+    }
+    else if (!static_cast<std::string>(e["type"]).compare("settings")) {
+      MenuNode *newNode = new MenuNode(e["label"]);
+      this->rootNode.addNode(newNode);
+    }
   }
 }
 
 void Menu::render(Font &font) {
   std::pair<float, float> coordinates(100, 100);
   std::string menutext;
-  int i = 0;
-  for (MenuNode &menuNode : *this->rootNode.getChildNodes()) {
-    //menutext += std::string(menuNode.getLabel()) + "\n";
-    menutext = std::string(menuNode.getLabel());
+  size_t i = 0;
+  for (auto menuNode : *this->currentMenu->getChildNodes()) {
+    menutext = std::string(menuNode->getLabel());
     std::pair<float, float> dimensions;
     dimensions = font.draw(menutext, coordinates);
 
-    if (i == 1) {
+    if (i == this->currentMenu->getSelected()) {
       SDL_Rect rect;
       rect.w = std::get<0>(dimensions) + 20;
       rect.h = std::get<1>(dimensions);
@@ -59,9 +152,26 @@ void Menu::render(Font &font) {
       SDL_RenderDrawRect(renderer.getRenderer(), &rect);
     }
 
-    coordinates = std::pair<float, float>(std::get<0>(coordinates), std::get<1>(coordinates) + std::get<1>(dimensions));
+    coordinates = std::pair<float, float>(std::get<0>(coordinates),
+                                          std::get<1>(coordinates) + std::get<1>(dimensions));
 
-    i++;
+    ++i;
   }
-//  font.draw(menutext);
+}
+
+MenuNode *Menu::getCurrentMenu() {
+  return currentMenu;
+}
+
+void Menu::up() {
+  currentMenu->up();
+}
+
+void Menu::down() {
+  currentMenu->down();
+}
+
+void Menu::back() {
+  outputLine("Setting menu to %s", std::string(currentMenu->getParent()->getLabel()).c_str());
+  currentMenu = currentMenu->getParent();
 }
