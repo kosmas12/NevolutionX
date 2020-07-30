@@ -56,7 +56,7 @@ int init_systems() {
   if (!nxMountDrive('Z', "\\Device\\Harddisk0\\Partition5")) {
     outputLine("Mounting error: Could not mount drive Z\n");
   }
-  if (!nxMountDrive('A', "\\Device\CdRom0")) {
+  if (!nxMountDrive('A', "\\Device\\CdRom0")) {
     outputLine("Mounting warning: Could not mount DVD drive\n");
   }
 #endif
