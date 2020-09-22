@@ -135,6 +135,9 @@ void MenuLaunch::execute(Menu *) {
 #endif
 }
 
+/******************************************************************************************
+                                   MenuExec
+******************************************************************************************/
 MenuExec::MenuExec(std::string const& label, void execute(Menu *)) :
   MenuItem(label), action(execute) {
 
